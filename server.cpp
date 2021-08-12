@@ -17,9 +17,30 @@
 
 static bool stop = false;
 static const char* status_line[2] = {"200 OK", "500 Internal Server Error"};
-// static const char* IP = "127.0.0.1";
-// static const int PORT = 8080;
-// static const int BACKLOG = 5;
+
+//将服务器程序后台化的函数设计,类似于库函数<nistd.h>中的int daemon(int nochdir, int noclose)
+bool daemonize() {
+    pid_t pid = fork();
+    if (pid < 0) { //开启进程失败
+        return false;
+    } else if (pid > 0) {//父进程处理直接退出
+        exit(0);
+    }
+    /*文件掩码的设置,本进程创建文件时权限为 mode & 0777*/
+    umask(0);
+
+    /*设置新的会话，本进程为新的进程组的首领*/
+    pid_t sid = setsid();
+    if (sid < 0) {
+        return false;
+    }
+
+    /*切换工作目录*/
+    if((chdir("/")) < 0) {
+        return false;
+    }
+
+}
 
 static void handle_term(int sig) {
     stop = true;
@@ -62,7 +83,10 @@ int main(int argc, char* argv[]) {
     assert(ret != -1 );
     printf("listen success, socketfd %d \n", sock);
 
-    while(1) {
+    //等待Ctrl+C信号终止循环
+    signal(SIGINT,handle_term);
+
+    while(!stop) {
         struct sockaddr_in client;
         socklen_t client_addrlength = sizeof(client);
         

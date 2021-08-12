@@ -12,7 +12,6 @@
 // static const int BACKLOG = 5;
 
 int main(int argc, char* argv[]) {
-
     const char* ip = argv[1];
     int port = atoi(argv[2]);
 
